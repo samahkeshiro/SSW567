@@ -1,3 +1,5 @@
+import contextlib
+import io
 import math
 import unittest
 
@@ -7,6 +9,10 @@ import unittest
 # ---------------------------------------------------------------------------
 
 def classify_triangle(a, b, c):
+    """Return the triangle type for sides a, b, c, or "Not a valid triangle".
+
+    Raises TypeError if any side is not an int or float.
+    """
     # --- Validate input types -------------------------------------------
     for side in (a, b, c):
         if not isinstance(side, (int, float)) or isinstance(side, bool):
@@ -42,8 +48,7 @@ def classify_triangle(a, b, c):
 
     if is_right:
         return f"{shape}, Right Triangle"
-    else:
-        return f"{shape}, Not a Right Triangle"
+    return f"{shape}, Not a Right Triangle"
 
 
 # ---------------------------------------------------------------------------
@@ -88,12 +93,11 @@ def classify_triangle_buggy(a, b, c):
     shortest, middle, longest = sides[0], sides[1], sides[2]
 
     # BUG 2 is on the next line: exact '==' instead of math.isclose().
-    is_right = (shortest ** 2 + middle ** 2 == longest ** 2)
+    is_right = shortest ** 2 + middle ** 2 == longest ** 2
 
     if is_right:
         return f"{shape}, Right Triangle"
-    else:
-        return f"{shape}, Not a Right Triangle"
+    return f"{shape}, Not a Right Triangle"
 
 
 # ---------------------------------------------------------------------------
@@ -121,22 +125,28 @@ class ValidityTestsMixin:
     """Tests for rejecting invalid (non-)triangles."""
 
     def test_sum_of_two_sides_equal_third_is_invalid(self):
+        """Test: sum of two sides equal third is invalid."""
         # Degenerate triangle: a straight line, not a real triangle.
         self.assertEqual(self.classify_triangle(1, 2, 3), "Not a valid triangle")
 
     def test_sum_of_two_sides_less_than_third_is_invalid(self):
+        """Test: sum of two sides less than third is invalid."""
         self.assertEqual(self.classify_triangle(1, 2, 10), "Not a valid triangle")
 
     def test_negative_side_is_invalid(self):
+        """Test: negative side is invalid."""
         self.assertEqual(self.classify_triangle(-3, 4, 5), "Not a valid triangle")
 
     def test_zero_side_is_invalid(self):
+        """Test: zero side is invalid."""
         self.assertEqual(self.classify_triangle(0, 4, 5), "Not a valid triangle")
 
     def test_all_zero_sides_is_invalid(self):
+        """Test: all zero sides is invalid."""
         self.assertEqual(self.classify_triangle(0, 0, 0), "Not a valid triangle")
 
     def test_non_numeric_side_raises_type_error(self):
+        """Test: non numeric side raises type error."""
         with self.assertRaises(TypeError):
             self.classify_triangle("3", 4, 5)
 
@@ -145,26 +155,32 @@ class ShapeTestsMixin:
     """Tests for correctly identifying scalene / isosceles / equilateral."""
 
     def test_equilateral(self):
+        """Test: equilateral."""
         result = self.classify_triangle(5, 5, 5)
         self.assertIn("Equilateral", result)
 
     def test_isosceles_first_pair_equal(self):
+        """Test: isosceles first pair equal."""
         result = self.classify_triangle(5, 5, 8)
         self.assertIn("Isosceles", result)
 
     def test_isosceles_second_pair_equal(self):
+        """Test: isosceles second pair equal."""
         result = self.classify_triangle(8, 5, 5)
         self.assertIn("Isosceles", result)
 
     def test_isosceles_outer_pair_equal(self):
+        """Test: isosceles outer pair equal."""
         result = self.classify_triangle(5, 8, 5)
         self.assertIn("Isosceles", result)
 
     def test_scalene(self):
+        """Test: scalene."""
         result = self.classify_triangle(4, 5, 6)
         self.assertIn("Scalene", result)
 
     def test_scalene_not_mislabeled_isosceles(self):
+        """Test: scalene not mislabeled isosceles."""
         # Guards against an off-by-one style bug in the equality checks.
         result = self.classify_triangle(7, 8, 9)
         self.assertIn("Scalene", result)
@@ -176,22 +192,26 @@ class RightAngleTestsMixin:
     """Tests for correctly identifying right triangles."""
 
     def test_classic_3_4_5_is_right(self):
+        """Test: classic 3-4-5 is right."""
         result = self.classify_triangle(3, 4, 5)
         self.assertIn("Right Triangle", result)
         self.assertNotIn("Not a Right", result)
 
     def test_5_12_13_is_right(self):
+        """Test: 5-12-13 is right."""
         result = self.classify_triangle(5, 12, 13)
         self.assertIn("Right Triangle", result)
         self.assertNotIn("Not a Right", result)
 
     def test_order_of_sides_does_not_matter_for_right_check(self):
+        """Test: order of sides does not matter for right check."""
         # Right-triangle check must work regardless of parameter order.
         result = self.classify_triangle(5, 3, 4)
         self.assertIn("Right Triangle", result)
         self.assertNotIn("Not a Right", result)
 
     def test_isosceles_right_triangle(self):
+        """Test: isosceles right triangle."""
         # An isosceles right triangle with legs 5, 5 has hypotenuse
         # 5*sqrt(2) ~= 7.0710678118654755
         result = self.classify_triangle(5, 5, 7.0710678118654755)
@@ -200,14 +220,17 @@ class RightAngleTestsMixin:
         self.assertNotIn("Not a Right", result)
 
     def test_equilateral_is_never_right(self):
+        """Test: equilateral is never right."""
         result = self.classify_triangle(6, 6, 6)
         self.assertIn("Not a Right Triangle", result)
 
     def test_obtuse_scalene_is_not_right(self):
+        """Test: obtuse scalene is not right."""
         result = self.classify_triangle(2, 3, 4)
         self.assertIn("Not a Right Triangle", result)
 
     def test_acute_scalene_is_not_right(self):
+        """Test: acute scalene is not right."""
         result = self.classify_triangle(6, 7, 8)
         self.assertIn("Not a Right Triangle", result)
 
@@ -216,12 +239,14 @@ class FloatInputsTestsMixin:
     """Tests using floating point side lengths."""
 
     def test_float_scalene_right_triangle(self):
+        """Test: float scalene right triangle."""
         result = self.classify_triangle(1.5, 2.0, 2.5)
         self.assertIn("Scalene", result)
         self.assertIn("Right Triangle", result)
         self.assertNotIn("Not a Right", result)
 
     def test_float_equilateral(self):
+        """Test: float equilateral."""
         result = self.classify_triangle(2.5, 2.5, 2.5)
         self.assertIn("Equilateral", result)
 
@@ -247,7 +272,7 @@ class TestTrianglesBuggyVersion(
     FloatInputsTestsMixin,
     unittest.TestCase,
 ):
-    """"
+    """
     Expected: 2 failures, corresponding to the two bugs intentionally
     injected above:
       1. test_sum_of_two_sides_equal_third_is_invalid  (off-by-one in the
@@ -261,8 +286,29 @@ class TestTrianglesBuggyVersion(
     classify_triangle = staticmethod(classify_triangle_buggy)
 
 
-if __name__ == "__main__":
-    # --- Manual demo run -------------------------------------------------
+class TestDemoOutput(unittest.TestCase):
+    """Tests for the print wrapper and the demo run."""
+
+    def test_run_classify_triangle_prints_result(self):
+        """Test: run_classify_triangle prints the call and its result."""
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            run_classify_triangle(3, 4, 5)
+        self.assertEqual(
+            buffer.getvalue().strip(),
+            "classify_triangle(3, 4, 5) = Scalene Triangle, Right Triangle",
+        )
+
+    def test_demo_prints_one_line_per_sample(self):
+        """Test: demo prints one result line for each sample triangle."""
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            demo()
+        self.assertEqual(len(buffer.getvalue().strip().splitlines()), 9)
+
+
+def demo():
+    """Print the classification of a few sample triangles."""
     sample_triangles = [
         (3, 4, 5),        # scalene, right
         (5, 5, 5),        # equilateral
@@ -274,10 +320,11 @@ if __name__ == "__main__":
         (-3, 4, 5),       # not valid, negative side
         (0, 4, 5),        # not valid, zero side
     ]
-    for (a, b, c) in sample_triangles:
-        run_classify_triangle(a, b, c)
+    for side_a, side_b, side_c in sample_triangles:
+        run_classify_triangle(side_a, side_b, side_c)
 
+
+if __name__ == "__main__":
+    demo()
     print()
-
-    # --- Run all unit tests ------------------------------------------------
     unittest.main(verbosity=2)
