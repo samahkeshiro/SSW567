@@ -1,4 +1,4 @@
-# Design Notes: Testing Perspective (HW03a)
+# Design Notes: Testing Perspective
 
 ## How I split the code up, and why
 
@@ -24,4 +24,4 @@ So instead, all 20 of my unit tests use mocked fake responses instead of the rea
 
 ## What I'd still want to test more, given more time
 
-I didn't write a test for what happens if the GitHub user ID itself doesn't exist at all (a 404 on the very first `/repos` call) — I do handle it (it raises an `HTTPError`), but I didn't spend time deciding what the *caller* should see in that case (a friendlier error message vs. letting the exception bubble up). I also didn't test what happens if GitHub's response is valid JSON but missing an expected field entirely (e.g., a repo object with no `"name"` key) — right now that would raise a raw `KeyError` rather than a clear error message, which is something worth hardening before building further on top of this next week.
+I tested that a nonexistent user ID (a 404 on the very first /repos call) raises an HTTPError at the fetch layer, but I didn't spend time deciding what the caller should see in that case (a friendlier error message vs. letting the exception bubble up), so there's no test pinning down that user-facing behavior yet. I also didn't test what happens if GitHub's response is valid JSON but missing an expected field entirely (e.g., a repo object with no "name" key) — right now that would raise a raw KeyError rather than a clear error message, which is something worth hardening before building further on top of this next week.
