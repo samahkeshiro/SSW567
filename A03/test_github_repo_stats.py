@@ -1,4 +1,6 @@
+import io
 import unittest
+import requests
 from unittest.mock import patch, MagicMock
 
 import github_repo_stats as ghs
@@ -54,7 +56,6 @@ def _mock_response(status_code=200, json_data=None):
 
 
 def requests_http_error(status_code):
-    import requests
     error = requests.exceptions.HTTPError(f"{status_code} error")
     error.response = MagicMock(status_code=status_code)
     return error
@@ -98,7 +99,7 @@ class TestFetchPaginated(unittest.TestCase):
     @patch("github_repo_stats.requests.get")
     def test_raises_for_404_not_found(self, mock_get):
         mock_get.return_value = _mock_response(404, {"message": "Not Found"})
-        with self.assertRaises(Exception):
+        with self.assertRaises(requests.exceptions.HTTPError):
             ghs._fetch_paginated("https://fake.url/users/doesnotexist12345/repos")
 
     @patch("github_repo_stats.requests.get")
@@ -155,6 +156,60 @@ class TestGetUserRepoCommitCounts(unittest.TestCase):
         result = ghs.get_user_repo_commit_counts("SomeoneWithNoRepos")
         self.assertEqual(result, [])
         mock_counts.assert_not_called()
+
+
+# HW03b: end-to-end mocking at the requests.get boundary.
+
+class TestMockedGitHubApi(unittest.TestCase):
+    @patch("github_repo_stats.requests.get")
+    def test_full_flow_prints_expected_lines(self, mock_get):
+        def fake_get(url, params=None, timeout=None):
+            if url.endswith("/users/John567/repos"):
+                return _mock_response(200, [{"name": "Triangle567"}, {"name": "Square567"}, {"name": "EmptyRepo"}])
+            if url.endswith("/repos/John567/Triangle567/commits"):
+                return _mock_response(200, [{"sha": str(i)} for i in range(10)])
+            if url.endswith("/repos/John567/Square567/commits"):
+                return _mock_response(200, [{"sha": str(i)} for i in range(27)])
+            if url.endswith("/repos/John567/EmptyRepo/commits"):
+                return _mock_response(409, {"message": "Git Repository is empty."})
+            raise AssertionError(f"Unexpected URL requested: {url}")
+
+        mock_get.side_effect = fake_get
+        with patch("sys.stdout", new_callable=io.StringIO) as fake_out:
+            ghs.print_user_repo_commit_counts("John567")
+
+        self.assertEqual(fake_out.getvalue().splitlines(), [
+            "Repo: Triangle567 Number of commits: 10",
+            "Repo: Square567 Number of commits: 27",
+            "Repo: EmptyRepo Number of commits: 0",
+        ])
+
+    @patch("github_repo_stats.requests.get")
+    def test_requests_100_per_page_starting_at_page_1(self, mock_get):
+        mock_get.return_value = _mock_response(200, [])
+        ghs._fetch_paginated("https://fake.url/repos")
+        self.assertEqual(mock_get.call_args.kwargs["params"], {"per_page": 100, "page": 1})
+
+    @patch("github_repo_stats.requests.get")
+    def test_exactly_100_items_checks_next_page_then_stops(self, mock_get):
+        mock_get.side_effect = [
+            _mock_response(200, [{"sha": str(i)} for i in range(100)]),
+            _mock_response(200, []),
+        ]
+        self.assertEqual(ghs.get_commit_count("John567", "Exactly100"), 100)
+        self.assertEqual(mock_get.call_count, 2)
+
+    @patch("github_repo_stats.requests.get")
+    def test_rate_limit_403_raises_http_error(self, mock_get):
+        mock_get.return_value = _mock_response(403, {"message": "API rate limit exceeded"})
+        with self.assertRaises(requests.exceptions.HTTPError):
+            ghs.get_repo_names("John567")
+
+    @patch("github_repo_stats.requests.get")
+    def test_non_list_json_raises_value_error(self, mock_get):
+        mock_get.return_value = _mock_response(200, {"message": "Not Found"})
+        with self.assertRaises(ValueError):
+            ghs.get_repo_names("John567")
 
 
 if __name__ == "__main__":
