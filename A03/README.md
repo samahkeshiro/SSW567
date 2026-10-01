@@ -1,7 +1,6 @@
 # GitHubApi-hw03a
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/samahkeshiro/SSW567/tree/A03_Mocking.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/samahkeshiro/SSW567/tree/A03_Mocking)
-
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/samahkeshiro/SSW567/tree/A03_mocking.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/samahkeshiro/SSW567/tree/A03_mocking)
 Given a GitHub user ID, this program retrieves the list of repositories
 owned by that user, along with the number of commits in each repository,
 using GitHub's public REST API (no authentication needed).
