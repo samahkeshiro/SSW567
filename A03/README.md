@@ -1,6 +1,6 @@
 # GitHubApi-hw03a
 
-[![Build Status](https://app.travis-ci.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME>.svg?branch=main)](https://app.travis-ci.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME>)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/samahkeshiro/SSW567/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/samahkeshiro/SSW567/tree/main)
 
 Given a GitHub user ID, this program retrieves the list of repositories
 owned by that user, along with the number of commits in each repository,
