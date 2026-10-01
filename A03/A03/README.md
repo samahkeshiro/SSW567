@@ -14,9 +14,8 @@ using GitHub's public REST API (no authentication needed).
   calls or GitHub API rate limit usage).
 - `requirements.txt` — dependencies (`requests`).
 - `DESIGN_NOTES.md` — write-up on the design/testing decisions made for
-  this assignment (Deliverable 2).
-- `sample.travis.yml` — instructions + reference config for adding HW03a's
-  test command to your existing `.travis.yml`.
+  this assignment.
+- CI: tests run on CircleCI on every push, configured in .circleci/config.yml at the repository root.
 
 ## Running it yourself
 
