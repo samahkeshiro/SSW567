@@ -8,11 +8,11 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: pip install -r GitHubApi-hw03a/requirements.txt
+          command: pip install -r A03/requirements.txt
       - run:
           name: Run HW03a unit tests
           command: |
-            cd GitHubApi-hw03a
+            cd A03
             python -m unittest -v
 
 workflows:
